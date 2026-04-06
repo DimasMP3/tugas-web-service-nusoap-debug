@@ -1,15 +1,20 @@
-<?
+<?php
+// Bug 1: Typo nama di fungsi require_once
+require_once "lib/nusoup.php";
 
-require_once "lib/nusoap.php";
+$client = new nusoap_client('http://localhost/xml/nusoap-debug/server.php?wsdl', true);
 
-$client = new nusoap_client("http://localhost/XML/server.php", true);
+$err = $client->getError();
+if ($err) {
+    echo "<p>Constructor error: " . $err . "</p>";
+}
 
 $a = 10;
-$b = 15;
+$b = 25;
 
-$result = $client->call('jumlahkan', array("a" => $a, "b" => $b));
+$resultTambah = $client->call('jumlahkan', array("a" => $a, "b" => $b));
+$resultKurang = $client->call('kurangi', array("x" => $a, "y" => $b));
 
-echo "Hasil penjumlahand dari " . $a . " dan " . $b . " adalah " . $result;
-
+echo "<p>Hasil penjumlahan " . $a . " dan " . $b . " adalah " . $resultTambah . "</p>";
+echo "<p>Hasil pengurangan " . $a . " dan " . $b . " adalah " . $resultKurang . "</p>";
 ?>
-

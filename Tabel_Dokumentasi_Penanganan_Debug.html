@@ -1,0 +1,206 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <title>Tabel Dokumentasi Penanganan Debug NuSOAP</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 20px;
+        }
+        table {
+            border-collapse: collapse;
+            width: 100%;
+            margin-bottom: 30px;
+        }
+        th, td {
+            border: 1px solid black;
+            padding: 10px;
+            vertical-align: top;
+        }
+        th {
+            background-color: #ffc000;
+            text-align: center;
+            font-weight: bold;
+        }
+        pre {
+            background-color: #2b303b;
+            color: #c0c5ce;
+            padding: 10px;
+            border-radius: 4px;
+            font-size: 13px;
+            overflow-x: auto;
+        }
+        .code-keyword { color: #b48ead; }
+        .code-string { color: #a3be8c; }
+        .screenshot-placeholder {
+            border: 2px dashed #999;
+            padding: 20px;
+            text-align: center;
+            background-color: #f9f9f9;
+            color: #666;
+            margin: 10px 0;
+            font-style: italic;
+        }
+    </style>
+</head>
+<body>
+
+    <table>
+        <tr>
+            <th width="15%">Programer</th>
+            <th width="25%">Temuan debug</th>
+            <th width="35%">Perbaikan coding</th>
+            <th width="25%">Hasil/Tampilan</th>
+        </tr>
+        <!-- Kasus Tahap 1 -->
+        <tr>
+            <td>
+                Nim : [Isi NIM]<br>
+                Nama : [Isi Nama Anda]
+            </td>
+            <td>
+                Tampil Pesan Error Undefined Variable saat menjalankan logika pemrograman function matematika.
+                <div class="screenshot-placeholder">
+                    [GAMBAR: Notice: Undefined variable: bil1 in C:\xampp\htdocs\XML\ujifunction.php on line 30]
+                </div>
+            </td>
+            <td>
+                Variabel yang akan ditampilkan di perintah <code>echo</code> salah ketik / salah panggil. Sebelumnya menggunakan pemanggilan <code>$bil1</code> padahal pada deklarasi *main script* memakai nama <code>$bilangan1</code>.<br><br>
+                Sebelum:<br>
+<pre>
+<span class="code-keyword">echo</span> <span class="code-string">"&lt;p&gt;Hasil penjumlahan "</span>.$bil1.<span class="code-string">" dan "</span>.$bil2.<span class="code-string">" adalah "</span>.$hasilplus.<span class="code-string">"&lt;/p&gt;"</span>;
+</pre>
+                Sesudah:<br>
+<pre>
+<span class="code-keyword">echo</span> <span class="code-string">"&lt;p&gt;Hasil penjumlahan "</span>.$bilangan1.<span class="code-string">" dan "</span>.$bilangan2.<span class="code-string">" adalah "</span>.$hasilplus.<span class="code-string">"&lt;/p&gt;"</span>;
+</pre>
+            </td>
+            <td>
+                Error <i>Notice</i> menghilang seutuhnya, teks hasil kalkulasi bisa ditampilkan dengan sempurna.
+                <div class="screenshot-placeholder">
+                    [GAMBAR: Hasil penjumlahan 10 dan 15 adalah 25]
+                </div>
+            </td>
+        </tr>
+
+        <!-- Kasus Tahap 2 & 3 (Bug 1) -->
+        <tr>
+            <td>
+                Nim : [Isi NIM]<br>
+                Nama : [Isi Nama Teman 1]
+            </td>
+            <td>
+                Terjadi <i>Fatal Error</i> (layar putih bertuliskan warning) karena library tidak bisa dimuat oleh file server.php / client.php secara benar.
+                <div class="screenshot-placeholder">
+                    [GAMBAR: Fatal error: require_once(lib/nusoup.php): failed to open stream]
+                </div>
+            </td>
+            <td>
+                Terdapat <i>typo</i> cacat ejaan huruf ('u') saat memanggil library framework webservice pada script nusoap.<br><br>
+                Sebelum:<br>
+<pre>
+<span class="code-keyword">require_once</span> <span class="code-string">"lib/nusoup.php"</span>;
+</pre>
+                Sesudah:<br>
+<pre>
+<span class="code-keyword">require_once</span> <span class="code-string">"lib/nusoap.php"</span>;
+</pre>
+            </td>
+            <td>
+                Setelah pemanggilan direktori diubah, koneksi file dan instantiate obyek SOAP berjalan aman tanpa crash.
+                <div class="screenshot-placeholder">
+                    [GAMBAR: Screenshot script tidak terhenti / jalan memanggil client]
+                </div>
+            </td>
+        </tr>
+    </table>
+
+    <table>
+        <tr>
+            <th width="15%" style="background-color: #ffc000;">Programer</th>
+            <th width="25%" style="background-color: #ffc000;">Temuan debug</th>
+            <th width="35%" style="background-color: #ffc000;">Perbaikan coding</th>
+            <th width="25%" style="background-color: #ffc000;">Hasil/Tampilan</th>
+        </tr>
+        <!-- Kasus Tahap 2 & 3 (Bug 2) -->
+        <tr>
+            <td>
+                Nim : [Isi NIM]<br>
+                Nama : [Isi Nama Anda/Teman 1]
+            </td>
+            <td>
+                Angka hasil lemparan balikan web service (response node) selalu kosong di browser client meskipun tidak memunculkan indikasi error.
+                <div class="screenshot-placeholder">
+                    [GAMBAR: Output bertuliskan "Hasil penjumlahan 10 dan 25 adalah " tanpa angka akhir perhitungan/bernilai null/0]
+                </div>
+            </td>
+            <td>
+                Pada badan function <code>jumlahkan($a, $b)</code> server, metode dibuat tidak mereturn variabel <code>$hasil</code> secara eksplisit ke memori program.<br><br>
+                Sebelum:<br>
+<pre>
+<span class="code-keyword">function</span> jumlahkan($a, $b) {
+    $hasil = $a + $b;
+    <span class="code-string">// Lupa memberikan perintah lemparan nilai keluar</span>
+}
+</pre>
+                Sesudah:<br>
+<pre>
+<span class="code-keyword">function</span> jumlahkan($a, $b) {
+    $hasil = $a + $b;
+    <span class="code-keyword">return</span> $hasil;
+}
+</pre>
+            </td>
+            <td>
+                Kini Payload XML meresponse tipe data integer dan angka muncul utuh di *echo* statement.
+                <div class="screenshot-placeholder">
+                    [GAMBAR: Output string lengkap: Hasil penjumlahan 10 dan 25 adalah 35]
+                </div>
+            </td>
+        </tr>
+
+        <!-- Kasus Tahap 2 & 3 (Bug 3) -->
+        <tr>
+            <td>
+                Nim : [Isi NIM]<br>
+                Nama : [Isi Nama Teman 2]
+            </td>
+            <td>
+                Peringatan error dari SOAP client karena format output balikan tidak diketahui format meta data tipe pengembalian nilainya.
+                <div class="screenshot-placeholder">
+                    [GAMBAR: Notice/Error return map atau Client gagal mengenali service namespace dari register]
+                </div>
+            </td>
+            <td>
+                Saat melakukan eksekusi <code>$server-&gt;register()</code> di script <code>server.php</code>, informasi array keluaran dan spesifikasi format payload RPC masih terbelengkalai belum disebutkan.<br><br>
+                Sebelum:<br>
+<pre>
+$server->register(<span class="code-string">'kurangi'</span>,
+    <span class="code-keyword">array</span>(<span class="code-string">'x'</span> => <span class="code-string">'xsd:int'</span>, <span class="code-string">'y'</span> => <span class="code-string">'xsd:int'</span>)
+);
+</pre>
+                Sesudah:<br>
+<pre>
+$server->register(<span class="code-string">'kurangi'</span>,
+    <span class="code-keyword">array</span>(<span class="code-string">'x'</span> => <span class="code-string">'xsd:int'</span>, <span class="code-string">'y'</span> => <span class="code-string">'xsd:int'</span>),
+    <span class="code-keyword">array</span>(<span class="code-string">'return'</span> => <span class="code-string">'xsd:int'</span>),
+    $namespace,
+    false,
+    <span class="code-string">'rpc'</span>,
+    <span class="code-string">'encoded'</span>,
+    <span class="code-string">'Mengurangi dua bilangan'</span>
+);
+</pre>
+            </td>
+            <td>
+                Struktur tipe balikan return SOAP terdata valid sehingga operasi bisa diurai oleh obyek dari bahasa pemrograman apapun.
+                <div class="screenshot-placeholder">
+                    [GAMBAR: Output hasil pengurangan secara ideal: Hasil pengurangan 10 dan 25 adalah -15]
+                </div>
+            </td>
+        </tr>
+    </table>
+
+</body>
+</html>
