@@ -1,54 +1,113 @@
-# NuSOAP (Client-Server) - Penjumlahan/Pengurangan
+# XML NuSOAP (Client-Server) - Penjumlahan (SOAP)
 
-Folder ini (`C:\xampp\htdocs\XML\nusoap-debug`) adalah **path utama** yang akan kamu kumpulkan.
+Project ini adalah contoh sederhana SOAP Web Service menggunakan **NuSOAP** di PHP (umumnya dipakai di XAMPP/Apache).
 
-Isi folder ini adalah contoh sederhana SOAP Web Service (NuSOAP) dengan:
-- `jumlahkan(a, b)` untuk penjumlahan
+Folder yang akan kamu kumpulkan (path utama):
+- `C:\xampp\htdocs\XML\nusoap-debug\`
+
+> Jika kamu hanya mengumpulkan `nusoap-debug/`, akses URL-nya akan lewat `/xml/nusoap-debug/...`.
 
 ---
 
-## Cara Menjalankan (Jika hanya pakai folder ini)
+## Struktur & URL
 
-Pastikan Apache XAMPP jalan, lalu akses:
+### 1) Implementasi utama (yang dikumpulkan)
+Semua yang penting ada di `nusoap-debug/`:
+- `nusoap-debug/client.php` -> SOAP client
+- `nusoap-debug/server.php` -> SOAP server + WSDL
+- `nusoap-debug/_debug_client.php` -> debug request/response SOAP
+- `nusoap-debug/before/` -> snapshot kode sebelum bug (untuk laporan)
+
+URL (kalau hanya pakai `nusoap-debug/`):
 - Client: `http://localhost/xml/nusoap-debug/client.php`
-- Server (Web description): `http://localhost/xml/nusoap-debug/server.php`
+- Server (web description): `http://localhost/xml/nusoap-debug/server.php`
 - WSDL: `http://localhost/xml/nusoap-debug/server.php?wsdl`
 - Debug: `http://localhost/xml/nusoap-debug/_debug_client.php`
 
-> Kalau kamu ingin URL pendek `http://localhost/xml/client.php` dan `server.php`, itu butuh file wrapper di root project (di luar folder ini).
+### 2) Wrapper URL pendek (opsional, di luar yang dikumpulkan)
+Di root `C:\xampp\htdocs\XML\` ada wrapper:
+- `client.php:3` -> me-require `nusoap-debug/client.php`
+- `server.php:3` -> me-require `nusoap-debug/server.php`
+- `_debug_client.php:3` -> me-require `nusoap-debug/_debug_client.php`
+
+URL (kalau wrapper dipakai):
+- `http://localhost/xml/client.php`
+- `http://localhost/xml/server.php?wsdl`
 
 ---
 
-## Snapshot “Sebelum” (Kode Bug)
+## Gejala Bug Awal
 
-Aku simpan versi awal yang bug di folder:
+Output client awalnya:
+
+`Hasil penjumlahan dari 10 dan 15 adalah`
+
+Tanpa hasil angka di belakangnya.
+
+---
+
+## Tabel Sebelum vs Sesudah (File + Line)
+
+Snapshot "sebelum" disimpan di:
 - `nusoap-debug/before/client.php`
 - `nusoap-debug/before/server.php`
 
-Ini supaya kamu bisa menunjukkan “sebelum vs sesudah” dengan jelas.
+| No | Kasus | Sebelum (bug) | Sesudah (fix) | Penjelasan & alasan |
+|---:|---|---|---|---|
+| 1 | Client pakai short tag `<?` | `nusoap-debug/before/client.php:1` | `nusoap-debug/client.php:1` | `<?` bisa nonaktif (setting `short_open_tag`), sehingga file tidak diproses benar. Aman selalu pakai `<?php`. |
+| 2 | Client tidak cek error/fault | `nusoap-debug/before/client.php:10` dan `nusoap-debug/before/client.php:12` | `nusoap-debug/client.php:12` dan `nusoap-debug/client.php:18` | Tanpa cek `$client->fault`/`$client->getError()`, saat SOAP gagal hasil bisa `false`/kosong dan tetap di-echo. Setelah fix, error terlihat jelas. |
+| 3 | Server belum publish WSDL + nama operasi tidak cocok | `nusoap-debug/before/server.php:6` dan `nusoap-debug/before/server.php:8` | `nusoap-debug/server.php:7` dan `nusoap-debug/server.php:9` dan `nusoap-debug/server.php:20` | Client memanggil `jumlahkan` tapi server awalnya register `jumlah`. Ditambah server belum `configureWSDL()`, jadi WSDL/web description tidak terbentuk. Fix: `configureWSDL()` + register `jumlahkan` + fungsi `jumlahkan()`. |
 
 ---
 
-## Yang Dibenerin (2 client + 1 server)
+## Kode Sebelum (Bug) vs Sesudah (Fix)
 
-### 1) Client: short tag `<?` (bisa bikin file tidak dieksekusi)
-- Sebelum: `nusoap-debug/before/client.php:1`
-- Sesudah: `nusoap-debug/client.php:1`
-- Alasan: di sebagian konfigurasi PHP, `short_open_tag` bisa OFF. Aman selalu gunakan `<?php`.
+### 1) Client - short tag
 
-### 2) Client: tidak ada error handling (hasil jadi kosong)
-- Sebelum: `nusoap-debug/before/client.php:10` dan `nusoap-debug/before/client.php:12`
-- Sesudah: `nusoap-debug/client.php:13` dan `nusoap-debug/client.php:20`
-- Alasan: kalau SOAP gagal, `$result` bisa `false`/kosong. Dengan cek `$client->fault` + `$client->getError()`, penyebabnya terlihat.
+Sebelum (bug) -> `nusoap-debug/before/client.php:1`
+```php
+<?
+```
 
-### 3) Server: belum publish WSDL + nama operasi tidak cocok
-- Sebelum: `nusoap-debug/before/server.php:6` dan `nusoap-debug/before/server.php:8`
-- Sesudah: `nusoap-debug/server.php:7` dan `nusoap-debug/server.php:9` dan `nusoap-debug/server.php:31`
-- Alasan: client memanggil `jumlahkan` tapi server awalnya register `jumlah`. Selain itu server belum `configureWSDL()`, jadi WSDL tidak tersedia. Solusi: `configureWSDL()` + `register("jumlahkan", ...)` + `function jumlahkan(...)`.
+Sesudah (fix) -> `nusoap-debug/client.php:1`
+```php
+<?php
+```
+
+### 2) Client - error handling
+
+Sebelum (bug) -> `nusoap-debug/before/client.php:10` dan `nusoap-debug/before/client.php:12`
+```php
+$result = $client->call('jumlahkan', array("a" => $a, "b" => $b));
+echo "Hasil penjumlahand dari " . $a . " dan " . $b . " adalah " . $result;
+```
+
+Sesudah (fix) -> `nusoap-debug/client.php:12` dan `nusoap-debug/client.php:18`
+```php
+if ($client->fault) { /* ... */ }
+$err = $client->getError();
+if ($err) { /* ... */ }
+```
+
+### 3) Server - WSDL + register method yang benar
+
+Sebelum (bug) -> `nusoap-debug/before/server.php:6` dan `nusoap-debug/before/server.php:8`
+```php
+$server->register('jumlah');
+function jumlah($a, $b) { return $a + $b; }
+```
+
+Sesudah (fix) -> `nusoap-debug/server.php:7` dan `nusoap-debug/server.php:9` dan `nusoap-debug/server.php:20`
+```php
+$server->configureWSDL("KalkulatorService", $namespace);
+$server->register("jumlahkan", /* ... */);
+function jumlahkan($a, $b) { return $a + $b; }
+```
 
 ---
 
 ## Hasil Akhir
 
-Jika service berjalan normal, membuka client akan menampilkan:
-- `Hasil penjumlahan dari 10 dan 15 adalah 25`
+Jika server berjalan normal:
+- Membuka `http://localhost/xml/nusoap-debug/client.php` menampilkan `Hasil penjumlahan dari 10 dan 15 adalah 25`.
+- Membuka `http://localhost/xml/nusoap-debug/server.php?wsdl` mengembalikan XML WSDL.
