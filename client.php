@@ -8,12 +8,10 @@ $a = 10;
 $b = 15;
 
 $resultTambah = $client->call('jumlahkan', array("a" => $a, "b" => $b));
-$resultKurang = $client->call('kurangkan', array("a" => $a, "b" => $b));
 
 if ($client->fault) {
     echo "SOAP Fault:\n";
     print_r($resultTambah);
-    print_r($resultKurang);
     exit;
 }
 
@@ -24,6 +22,5 @@ if ($err) {
 }
 
 echo "Hasil penjumlahan dari " . $a . " dan " . $b . " adalah " . $resultTambah . "<br>";
-echo "Hasil pengurangan dari " . $a . " dan " . $b . " adalah " . $resultKurang . "<br>";
 
 ?>
